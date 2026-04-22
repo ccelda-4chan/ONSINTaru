@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: osint-tool
+    env: docker
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: RENDER
+        value: "true"
+      - key: SHODAN_API_KEY
+        sync: false
+      - key: CENSYS_API_ID
+        sync: false
+      - key: CENSYS_API_SECRET
+        sync: false
+      - key: MONGO_URI
+        sync: false
