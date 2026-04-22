@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from holehe import core as holehe_core
 from holehe import modules as holehe_modules
+import httpx
 
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -60,12 +61,17 @@ async def run_shodan(ip: str, task_id: str):
 async def run_holehe(email: str, task_id: str):
     tasks[task_id]["status"] = "processing"
     out = []
-    modules_list = holehe_core.import_submodules(holehe_modules)
-    for module in modules_list:
-        try:
-            await module.check(email, out)
-        except Exception:
-            pass
+    # In holehe 1.61, import_submodules returns a dict {name: module_object}
+    modules_dict = holehe_core.import_submodules("holehe.modules")
+    
+    async with httpx.AsyncClient() as client:
+        for module in modules_dict.values():
+            try:
+                # 1.61 uses (email, client, out)
+                await module.check(email, client, out)
+            except Exception:
+                pass
+                
     tasks[task_id]["results"] = out
     tasks[task_id]["status"] = "completed"
     await save_scan(task_id, tasks[task_id])
